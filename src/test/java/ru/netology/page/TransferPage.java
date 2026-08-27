@@ -37,18 +37,22 @@ public class TransferPage {
         return new DashboardPage();
     }
 
-    public String transferExpectingError(
+    public void transferExpectingError(
             int transferAmount,
             String sourceCard) {
 
         fillTransferForm(transferAmount, sourceCard);
+    }
 
-        return error
+    public void verifyErrorMessage(String expectedMessage) {
+        error
                 .shouldBe(
                         Condition.visible,
                         Duration.ofSeconds(15)
                 )
-                .text();
+                .shouldHave(
+                        Condition.exactText(expectedMessage)
+                );
     }
 
     private void fillTransferForm(

@@ -12,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MoneyTransferTest {
 
+    private static final int FIRST_CARD = 0;
+    private static final int SECOND_CARD = 1;
+
     private DashboardPage dashboardPage;
 
     @BeforeEach
@@ -21,7 +24,9 @@ class MoneyTransferTest {
         var loginPage = new LoginPage();
 
         var verificationPage =
-                loginPage.validLogin(DataHelper.getAuthInfo());
+                loginPage.validLogin(
+                        DataHelper.getAuthInfo()
+                );
 
         dashboardPage =
                 verificationPage.validVerify(
@@ -30,92 +35,56 @@ class MoneyTransferTest {
     }
 
     @Test
-    void shouldSuccessfullyTransferMoneyBetweenOwnCards() {
+    void shouldSuccessfullyTransferMoneyFromFirstCardToSecondCard() {
 
-        int firstBalance =
-                dashboardPage.getCardBalance(0);
+        int firstCardBalance =
+                dashboardPage.getCardBalance(FIRST_CARD);
 
-        int secondBalance =
-                dashboardPage.getCardBalance(1);
-
-        int sourceIndex;
-        int targetIndex;
-
-        if (firstBalance >= secondBalance) {
-            sourceIndex = 0;
-            targetIndex = 1;
-        } else {
-            sourceIndex = 1;
-            targetIndex = 0;
-        }
-
-        int sourceBalance =
-                dashboardPage.getCardBalance(sourceIndex);
-
-        int targetBalance =
-                dashboardPage.getCardBalance(targetIndex);
+        int secondCardBalance =
+                dashboardPage.getCardBalance(SECOND_CARD);
 
         int amount =
-                DataHelper.getValidAmount(sourceBalance);
+                DataHelper.getValidAmount(firstCardBalance);
 
         var transferPage =
-                dashboardPage.selectCardToDeposit(targetIndex);
+                dashboardPage.selectCardToDeposit(SECOND_CARD);
 
         dashboardPage = transferPage.transfer(
                 amount,
-                DataHelper.getCardNumber(sourceIndex)
+                DataHelper.getCardNumber(FIRST_CARD)
         );
 
         assertAll(
                 () -> assertEquals(
-                        sourceBalance - amount,
-                        dashboardPage.getCardBalance(sourceIndex)
+                        firstCardBalance - amount,
+                        dashboardPage.getCardBalance(FIRST_CARD)
                 ),
                 () -> assertEquals(
-                        targetBalance + amount,
-                        dashboardPage.getCardBalance(targetIndex)
+                        secondCardBalance + amount,
+                        dashboardPage.getCardBalance(SECOND_CARD)
                 )
         );
     }
 
     @Test
-    void shouldNotTransferMoreThanCardBalance() {
+    void shouldNotTransferMoreThanSecondCardBalanceToFirstCard() {
 
-        int firstBalance =
-                dashboardPage.getCardBalance(0);
-
-        int secondBalance =
-                dashboardPage.getCardBalance(1);
-
-        int sourceIndex;
-        int targetIndex;
-
-        if (firstBalance >= secondBalance) {
-            sourceIndex = 0;
-            targetIndex = 1;
-        } else {
-            sourceIndex = 1;
-            targetIndex = 0;
-        }
-
-        int sourceBalance =
-                dashboardPage.getCardBalance(sourceIndex);
+        int secondCardBalance =
+                dashboardPage.getCardBalance(SECOND_CARD);
 
         int invalidAmount =
-                DataHelper.getInvalidAmount(sourceBalance);
+                DataHelper.getInvalidAmount(secondCardBalance);
 
         var transferPage =
-                dashboardPage.selectCardToDeposit(targetIndex);
+                dashboardPage.selectCardToDeposit(FIRST_CARD);
 
-        String errorMessage =
-                transferPage.transferExpectingError(
-                        invalidAmount,
-                        DataHelper.getCardNumber(sourceIndex)
-                );
+        transferPage.transferExpectingError(
+                invalidAmount,
+                DataHelper.getCardNumber(SECOND_CARD)
+        );
 
-        assertEquals(
-                "Недостаточно средств на карте",
-                errorMessage
+        transferPage.verifyErrorMessage(
+                "Недостаточно средств на карте"
         );
     }
 }
